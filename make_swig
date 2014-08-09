@@ -1,7 +1,0 @@
-swig -c++ -python polypartition.i
-g++ -c polypartition.cpp polypartition_wrap.cxx -I/usr/include/python2.7
-g++ -dynamiclib -framework python polypartition.o polypartition_wrap.o -o _polypartition.so
-python test.py
-
-
-ld -shared polypartition.o polypartition_wrap.o -o _polypartition.dll 
