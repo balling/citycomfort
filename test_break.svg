@@ -1,0 +1,19 @@
+<?xml version="1.0" standalone="no"?> 
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.0//EN" 
+"http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd"> 
+
+<svg width="156.18px" height="206.84px" viewBox="0 0 156.18 206.84" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+	<filter id="Gamma">
+	  <feComponentTransfer>
+		<feFuncR type="gamma" amplitude="1" exponent="0.3" offset="0" />
+		<feFuncG type="gamma" amplitude="1" exponent="0.3" offset="0" />
+		<feFuncB type="gamma" amplitude="1" exponent="0.3" offset="0" />
+	  </feComponentTransfer>
+	</filter>
+  </defs>
+
+ <path d=" M 10.00 10.00 L 138.15 46.84 L 128.15 80.59 L 146.18 86.19 L 109.40 109.97 L 25.65 84.97 L 17.53 113.09 L 101.28 137.47 L 109.40 109.97 L 146.18 86.19 L 115.03 196.84 L 10.00 167.51 z"
+ style="fill:#138013; fill-opacity:0.38; fill-rule:evenodd; stroke:#003300; stroke-opacity:1.00; stroke-width:0.80;" filter="url(#Gamma)"/>
+
+</svg>

@@ -1,0 +1,31 @@
+<?xml version="1.0" standalone="no"?> 
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.0//EN" 
+"http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd"> 
+
+<svg width="1020px" height="1020px" viewBox="0 0 1020 1020" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+	<filter id="Gamma">
+	  <feComponentTransfer>
+		<feFuncR type="gamma" amplitude="1" exponent="0.3" offset="0" />
+		<feFuncG type="gamma" amplitude="1" exponent="0.3" offset="0" />
+		<feFuncB type="gamma" amplitude="1" exponent="0.3" offset="0" />
+	  </feComponentTransfer>
+	</filter>
+  </defs>
+
+ <path d=" M 10.00 10.00 L 820.00 10.00 L 820.00 70.00 L 810.00 140.00 L 790.00 240.00 L 330.00 610.00 L 210.00 690.00 L 100.00 690.00 L 10.00 680.00 z"
+ style="fill:#2c0d25; fill-opacity:1.00; fill-rule:evenodd; stroke:#2c0d25; stroke-opacity:1.00; stroke-width:0.80;" filter="url(#Gamma)"/>
+
+ <path d=" M 810.00 120.00 L 820.00 10.00 L 1010.00 10.00 L 1010.00 150.00 L 860.00 150.00 L 810.00 140.00 z"
+ style="fill:#46183d; fill-opacity:1.00; fill-rule:evenodd; stroke:#46183d; stroke-opacity:1.00; stroke-width:0.80;" filter="url(#Gamma)"/>
+
+ <path d=" M 790.00 240.00 L 890.00 150.00 L 1010.00 150.00 L 1010.00 620.00 L 890.00 620.00 L 880.00 610.00 L 790.00 500.00 z"
+ style="fill:#acf65e; fill-opacity:1.00; fill-rule:evenodd; stroke:#acf65e; stroke-opacity:1.00; stroke-width:0.80;" filter="url(#Gamma)"/>
+
+ <path d=" M 320.00 440.00 L 340.00 360.00 L 450.00 250.00 L 470.00 240.00 L 530.00 220.00 L 630.00 190.00 L 700.00 170.00 L 710.00 170.00 L 730.00 180.00 L 790.00 240.00 L 790.00 510.00 L 730.00 640.00 L 720.00 650.00 L 710.00 650.00 L 410.00 610.00 L 370.00 570.00 L 320.00 460.00 z"
+ style="fill:#009d31; fill-opacity:1.00; fill-rule:evenodd; stroke:#009d31; stroke-opacity:1.00; stroke-width:0.80;" filter="url(#Gamma)"/>
+
+ <path d=" M 10.00 810.00 L 360.00 570.00 L 380.00 570.00 L 1010.00 650.00 L 1010.00 1010.00 L 10.00 1010.00 z"
+ style="fill:#e8dd36; fill-opacity:1.00; fill-rule:evenodd; stroke:#e8dd36; stroke-opacity:1.00; stroke-width:0.80;" filter="url(#Gamma)"/>
+
+</svg>
