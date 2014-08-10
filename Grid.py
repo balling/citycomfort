@@ -3,97 +3,65 @@ import math
 import TPPL
 import random
 
-# def ReadPoly(f):
-# 	p=TPPL.Poly()
-# 	n=int(f.readline())
-# 	p.Init(n)
-# 	p.hole=int(f.readline())>0
-# 	for i in range(n):
-# 		line=f.readline()
-# 		vals=line.split()
-# 		p.points.append(TPPL.Point(int(vals[0]),int(vals[1])))
-# 	if((p.GetOrientation()==1) == p.hole):
-# 		p.Invert()
-# 	return p
-
-# def ReadPolyList(filename):
-# 	f=open(filename,"r")
-# 	l=[]
-# 	for i in range(0,int(f.readline())):
-# 		l.append(ReadPoly(f))
-# 	pa=TPPL.Partition(25000,50)
-# 	p=pa.RemoveHoles(pa.Smooth(l))
-# 	return p
+#not included: exception handling, especially when input is out of bound or of different type than expected
 
 class GridCell:
-	def __init__(self,shape=None,normal=1,val=None,active=False):
+	def __init__(self,shape=None,normal=(0,0,1),val=None,active=False):
 		self.shape=shape
 		self.val=val
 		self.normal=normal
 		self.active=active
 
 class SVFGrid:
-	def __init__(self,n,thres,side,ratio,svfFilename="building1407svf1.txt"):
+	def __init__(self,thres,side,ratio,numlayer,heights):
 		self.grids=[]
-		self.n=n
 		self.activecnt=0
-		self.interval=10
 		self.svfs=[]
-		self.newsvf=[]
-		self.side=side*n
 		self.ratio=ratio
-		f=open(svfFilename,"r")	
-		for i in range(n):
-			line=f.readline()
-			vals=line.split()
-			self.svfs+=map(float,vals)
+		self.svfs=[map(float,line.strip().split()) for line in open("./svf_0.txt","r")]
+		self.n=len(self.svfs)
+		self.svfs=[item for sublist in self.svfs for item in sublist] #flatten the list of lists
+		#read in the x, y coordinate of the points and normals
+		vals = [map(float,line.strip().split()) for line in open('./0.pts')]
+		self.interval=math.fabs(vals[0][1]-vals[1][1])
+		self.side=side*self.n
 		zone=[]
-		for i in range(self.n*self.n):
-			grid=GridCell(TPPL.Poly().Square(TPPL.Point((i/self.n)*self.interval,(i%self.n)*self.interval),self.interval))
-			self.grids.append(grid)
-			if self.svfs[i]==0:
-				grid.val=-1
-			else:
-				grid.val=-2
+		for i in range(len(self.svfs)):
+			self.grids.append(GridCell(TPPL.Poly().Square(TPPL.Point(vals[i][0]-self.interval/2.0,vals[i][1]-self.interval/2.0),self.interval),(vals[i][3],vals[i][4],vals[i][5])))
+			if self.svfs[i]>0:
 				zone.append(i)
 		zones=self.Compute(zone,thres)
 		self.Draw(zones)
-		newzones=self.LoadNewSVF(zones)
-		self.Draw(newzones,"newzones.svg")
-		self.ToOBJ(zones)
-		self.ToOBJ(newzones,900,"newzones.obj")
-		self.SaveInfo(2,zonelists=[zones,newzones],heights=[900,900])
+		zonelists=[]
+		zonelists.append(zones)
+		for i in range(1,numlayer):
+			self.svfs=[map(float,line.strip().split()) for line in open("./svf_{0}.txt".format(i),"r")]
+			self.svfs=[item for sublist in self.svfs for item in sublist] #flatten the list of lists
+			zones=copy.deepcopy(zonelists[i-1])
+			z=[]
+			for j in range(len(self.svfs)):
+				if self.svfs[j]==0:
+					for zone in zones:
+						if j in zone:
+							zone.remove(j)
+				elif not any(j in l for l in zonelists[i-1]):
+					z.append(j)
+					self.grids[j].val=-1
+			zones+=self.Compute(z,thres)
+			zonelists.append(zones)
+		for i in range(numlayer):
+			self.Draw(zonelists[i],"layer_{0}.svg".format(i))
+			self.ToOBJ(zonelists[i],heights[i],"layer_{0}.obj".format(i),heights[i])
+		# self.SaveInfo(numlayer,zonelists,heights)
 		# print self.vals
 		# Draw(self.grids,"grid.svg")
 
-	def LoadNewSVF(self,zones):
-		self.newsvf=[]
-		newzones=copy.deepcopy(zones)
-		f=open("building1407svf_new.txt","r")
-		for i in range(self.n):
-			line=f.readline()
-			vals=line.split()
-			self.newsvf+=map(float,vals)
-		self.activecnt=0
-		for i in range(len(self.grids)):
-			self.grids[i].active=False
-		for i in range(len(self.newsvf)):
-			if self.newsvf[i]!=0 and self.svfs[i]==0:
-				self.grids[i].active=True
-				self.activecnt+=1
-		previous=-1
-		while self.activecnt>0 and self.activecnt!=previous:
-			previous=self.activecnt
-			for i in range(len(newzones)):
-				newzones[i]=self.Expand(newzones[i])
-		return newzones
-
 	def Compute(self,zone,thres):
 		self.activecnt=0
-		for i in range(len(self.grids)):
-			self.grids[i].active=False
+		for grid in self.grids:
+			grid.active=False
 		if thres<1:
-			if len(zone)<4 or self.IsAspectRatioInRange(zone):
+			if self.IsAspectRatioInRange(zone):
 				return [zone]
 			else:
 				for i in zone:
@@ -107,7 +75,7 @@ class SVFGrid:
 					if cell%self.n > bottom%self.n: bottom = cell
 				x=right/self.n-left/self.n
 				y=bottom%self.n-top%self.n
-				print x,y
+				print x, y
 				result=set()
 				if x>self.side or y/float(x)<=self.ratio:
 					result.add(left)
@@ -183,7 +151,7 @@ class SVFGrid:
 						break
 		result=[]
 		for z in zones:
-			if len(z)<4 or (self.IsAspectRatioInRange(z) and self.ConvexHull(z).GetArea()/(len(z)*100)<1.5):
+			if self.IsAspectRatioInRange(z) and self.ConvexHull(z).GetArea()/(len(z)*100)<1.5:
 				result.append(z)
 			else:
 				# print len(z), thres, len(result)
@@ -206,58 +174,59 @@ class SVFGrid:
 			i=i+1
 		f.close()
 
-	def SaveInfo(self,num,**dict):
+	def SaveInfo(self,num,zonelists,heights):
 		"""self.SaveInfo(2,zonelists=[[[1,2,3],[2,3,4],[3,4,5]],[[1,3,5],[2,4,6]]],heights=[0,900])"""
 		f=open("property.csv",'w')
 
-		for i in range(len(dict["zonelists"][0])):
-			f.write("Z{0}H{1},{2},{3}\n".format(i,0,len(dict["zonelists"][0][i])*100,len(dict["zonelists"][0][i])*100*dict["heights"][0]))
-		for i in range(len(dict["zonelists"][1])):
-			f.write("Z{0}H{1},{2},{3}\n".format(i,dict["heights"][0],len(dict["zonelists"][1][i])*100,len(dict["zonelists"][1][i])*100*dict["heights"][1]))
+		for i in range(len(zonelists[0])):
+			f.write("Z{0}H{1},{2},{3}\n".format(i,0,len(zonelists[0][i])*100,len(zonelists[0][i])*100*heights[0]))
+		for i in range(len(zonelists[1])):
+			f.write("Z{0}H{1},{2},{3}\n".format(i,heights[0],len(zonelists[1][i])*100,len(zonelists[1][i])*100*heights[1]))
 		f.close()
 		f=open("zone_input.csv",'w')
 		f.write("0,G,")
-		for i in range(len(dict["zonelists"][0])):
+		for i in range(len(zonelists[0])):
 			f.write("Z{0}H{1},".format(i,0))
-		for i in range(len(dict["zonelists"][0])):
-			f.write("Z{0}H{1},".format(i,dict["heights"][0]))
+		for i in range(len(zonelists[0])):
+			f.write("Z{0}H{1},".format(i,heights[0]))
 		f.write("B\n")
 		f.write("0\t0,0\t0,")
-		for zone in dict["zonelists"][0]:
-			f.write("0\t{0},".format(self.CountNeighbour(zone,lambda x: (x%self.n<0 or x%self.n>=self.n or x/self.n<0 or x/self.n>=self.n))*10*dict["heights"][0]))
-		for zone in dict["zonelists"][1]:
-			f.write("{0}\t{1},".format(len(zone)*100,self.CountNeighbour(zone,lambda x: (x%self.n<0 or x%self.n>=self.n or x/self.n<0 or x/self.n>=self.n))*10*dict["heights"][1]))
+		for zone in zonelists[0]:
+			f.write("0\t{0},".format(self.CountNeighbour(zone,lambda x: (x%self.n<0 or x%self.n>=self.n or x/self.n<0 or x/self.n>=self.n))*10*heights[0]))
+		for zone in zonelists[1]:
+			f.write("{0}\t{1},".format(len(zone)*100,self.CountNeighbour(zone,lambda x: (x%self.n<0 or x%self.n>=self.n or x/self.n<0 or x/self.n>=self.n))*10*heights[1]))
 		f.write("0\t0\n")
 		f.write("0\t0,0\t0,")
-		for zone in dict["zonelists"][0]:
+		for zone in zonelists[0]:
 			f.write("{0}\t0,".format(len(zone)*100))
-		for zone in dict["zonelists"][1]:
+		for zone in zonelists[1]:
 			f.write("0\t0,")
 		f.write("0\t0\n")
-		for i1 in range(len(dict["zonelists"][0])):
+		for i1 in range(len(zonelists[0])):
 			f.write("0\t0,0\t0,")
-			for i2 in range(len(dict["zonelists"][0])):
+			for i2 in range(len(zonelists[0])):
 				if i1==i2:
 					f.write("0\t0,")
 				else:
-					f.write("0\t{0},".format(self.CountNeighbour(dict["zonelists"][0][i2],lambda x: (x in dict["zonelists"][0][i1]))*10*dict["heights"][0]))
-			for i2 in range(len(dict["zonelists"][1])):
+					f.write("0\t{0},".format(self.CountNeighbour(zonelists[0][i2],lambda x: (x in zonelists[0][i1]))*10*heights[0]))
+			for i2 in range(len(zonelists[1])):
 				if i1==i2:
-					f.write("{0}\t0,".format(len(dict["zonelists"][0][i1])*100))
+					f.write("{0}\t0,".format(len(zonelists[0][i1])*100))
 				else:
 					f.write("0\t0,")
-			f.write("0\t{0}\n".format(self.CountNeighbour(dict["zonelists"][0][i1],lambda x: self.svfs[x]==0)))
-		for i1 in range(len(dict["zonelists"][1])):
+			f.write("0\t{0}\n".format(self.CountNeighbour(zonelists[0][i1],lambda x: self.svfs[x]==0)))
+		for i1 in range(len(zonelists[1])):
 			f.write("0\t0,0\t0,")
-			for i2 in range(len(dict["zonelists"][0])):
+			for i2 in range(len(zonelists[0])):
 				f.write("0\t0,")
-			for i2 in range(len(dict["zonelists"][1])):
+			for i2 in range(len(zonelists[1])):
 				if i1==i2:
 					f.write("0\t0,")
 				else:
-					f.write("0\t{0},".format(self.CountNeighbour(dict["zonelists"][1][i2],lambda x: (x in dict["zonelists"][1][i1]))*10*dict["heights"][1]))
-			f.write("{0}\t{1}\n".format((len(dict["zonelists"][1][i1])-len(dict["zonelists"][0][i1]))*100,self.CountNeighbour(dict["zonelists"][1][i1],lambda x: self.newsvf[x]==0)))
-		for i in range(3+2*len(dict["zonelists"][0])):
+					f.write("0\t{0},".format(self.CountNeighbour(zonelists[1][i2],lambda x: (x in zonelists[1][i1]))*10*heights[1]))
+			f.write("{0}\t{1}\n".format((len(zonelists[1][i1])-len(zonelists[0][i1]))*100,self.CountNeighbour(zonelists[1][i1],lambda x: self.svfs[x]==0)))
+			# f.write("{0}\t{1}\n".format((len(zonelists[1][i1])-len(zonelists[0][i1]))*100,self.CountNeighbour(zonelists[1][i1],lambda x: self.newsvf[x]==0)))
+		for i in range(3+2*len(zonelists[0])):
 			f.write("0\t0,")
 		f.write("0\t0\n")
 		f.close()
@@ -329,8 +298,10 @@ class SVFGrid:
 			if cell/self.n > right: right = cell/self.n
 			if cell%self.n < top: top = cell%self.n
 			if cell%self.n > bottom: bottom = cell%self.n
-		x=right-left
-		y=bottom-top
+		x=right-left+1
+		y=bottom-top+1
+		if x<4 or y<4:
+			return True
 		if x>self.side or y>self.side:
 			return False
 		if x<y:
